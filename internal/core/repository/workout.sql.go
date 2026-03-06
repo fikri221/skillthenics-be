@@ -97,6 +97,28 @@ func (q *Queries) CreateWorkoutSession(ctx context.Context, arg CreateWorkoutSes
 	)
 }
 
+const updateWorkoutSession = `-- name: UpdateWorkoutSession :execresult
+UPDATE workout_sessions SET session_date = ?, duration_minutes = ?, calories_burned = ?, notes = ? WHERE id = ?
+`
+
+type UpdateWorkoutSessionParams struct {
+	ID              string         `json:"id"`
+	SessionDate     time.Time      `json:"session_date"`
+	DurationMinutes sql.NullInt32  `json:"duration_minutes"`
+	CaloriesBurned  sql.NullInt32  `json:"calories_burned"`
+	Notes           sql.NullString `json:"notes"`
+}
+
+func (q *Queries) UpdateWorkoutSession(ctx context.Context, arg UpdateWorkoutSessionParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, updateWorkoutSession,
+		arg.SessionDate,
+		arg.DurationMinutes,
+		arg.CaloriesBurned,
+		arg.Notes,
+		arg.ID,
+	)
+}
+
 const getExerciseByID = `-- name: GetExerciseByID :one
 SELECT id, name, description, muscle_group, difficulty, created_at, updated_at FROM exercises WHERE id = ?
 `

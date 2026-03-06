@@ -187,7 +187,14 @@ func mapToWorkoutSession(workoutSession repository.WorkoutSession) WorkoutSessio
 }
 
 func (r *repoWrapper) UpdateWorkoutSession(ctx context.Context, session WorkoutSession) error {
-	return nil
+	_, err := r.db.UpdateWorkoutSession(ctx, repository.UpdateWorkoutSessionParams{
+		ID:              session.ID,
+		SessionDate:     session.SessionDate,
+		DurationMinutes: toNullInt32(session.Duration),
+		CaloriesBurned:  toNullInt32(session.Calories),
+		Notes:           toNullString(session.Notes),
+	})
+	return err
 }
 
 func (r *repoWrapper) DeleteWorkoutSession(ctx context.Context, id string) error {

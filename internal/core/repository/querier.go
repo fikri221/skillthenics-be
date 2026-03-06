@@ -49,6 +49,7 @@ type Querier interface {
 	UpdateExercise(ctx context.Context, arg UpdateExerciseParams) (sql.Result, error)
 	UpdateProduct(ctx context.Context, arg UpdateProductParams) (sql.Result, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (sql.Result, error)
+	UpdateWorkoutSession(ctx context.Context, arg UpdateWorkoutSessionParams) (sql.Result, error)
 }
 
 var _ Querier = (*Queries)(nil)

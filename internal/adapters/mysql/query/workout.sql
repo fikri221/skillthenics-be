@@ -21,6 +21,9 @@ SELECT * FROM workout_sessions WHERE id = ?;
 -- name: ListWorkoutSessionsByUser :many
 SELECT * FROM workout_sessions WHERE user_id = ? ORDER BY session_date DESC;
 
+-- name: UpdateWorkoutSession :execresult
+UPDATE workout_sessions SET session_date = ?, duration_minutes = ?, calories_burned = ?, notes = ? WHERE id = ?;
+
 -- name: CreateWorkoutExercise :execresult
 INSERT INTO workout_exercises (workout_session_id, exercise_id, notes)
 VALUES (?, ?, ?);
