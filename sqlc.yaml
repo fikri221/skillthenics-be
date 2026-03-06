@@ -1,0 +1,12 @@
+version: "2"
+sql:
+  - engine: "mysql"
+    queries: "./internal/adapters/mysql/query/"
+    schema: "./internal/adapters/mysql/migrations"
+    gen:
+      go:
+        package: "repository"
+        out: "./internal/core/repository"
+        sql_package: "database/sql"
+        emit_json_tags: true
+        emit_interface: true

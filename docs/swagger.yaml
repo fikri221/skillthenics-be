@@ -1,0 +1,508 @@
+basePath: /
+definitions:
+  auth.LoginResponse:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+      user:
+        $ref: '#/definitions/auth.User'
+    type: object
+  auth.User:
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  auth.loginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  auth.refreshRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  json.Pagination:
+    properties:
+      page:
+        type: integer
+      size:
+        type: integer
+      total:
+        type: integer
+      totalPages:
+        type: integer
+    type: object
+  json.Response:
+    properties:
+      data: {}
+      pagination:
+        $ref: '#/definitions/json.Pagination'
+      responseCode:
+        type: string
+      responseMessage:
+        type: string
+      timestamp:
+        type: string
+      traceId:
+        type: string
+    type: object
+  orders.Order:
+    properties:
+      created_at:
+        type: string
+      customer_name:
+        type: string
+      id:
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/orders.OrderItem'
+        type: array
+      total_amount:
+        type: number
+    type: object
+  orders.OrderItem:
+    properties:
+      id:
+        type: integer
+      price:
+        description: Historical price at the time of order
+        type: number
+      product_id:
+        type: string
+      product_name:
+        description: From JOIN
+        type: string
+      quantity:
+        type: integer
+    type: object
+  orders.createOrderItemRequest:
+    properties:
+      price:
+        type: number
+      product_id:
+        type: string
+      quantity:
+        type: integer
+    required:
+    - price
+    - product_id
+    - quantity
+    type: object
+  orders.createOrderRequest:
+    properties:
+      customer_name:
+        minLength: 3
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/orders.createOrderItemRequest'
+        minItems: 1
+        type: array
+    required:
+    - customer_name
+    - items
+    type: object
+  products.Product:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      price:
+        type: string
+      rec_status:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  products.createProductRequest:
+    properties:
+      name:
+        minLength: 3
+        type: string
+      price:
+        type: number
+    required:
+    - name
+    - price
+    type: object
+  products.updateProductRequest:
+    properties:
+      name:
+        minLength: 3
+        type: string
+      price:
+        type: number
+    required:
+    - name
+    - price
+    type: object
+host: localhost:8788
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is a sample server for a Go project with Clean Architecture.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: NDS Go Starter API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user and return Access and Refresh tokens
+      parameters:
+      - description: Login Credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.loginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auth.LoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/json.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/json.Response'
+      summary: User Login
+      tags:
+      - auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Generate a new access token using a valid refresh token
+      parameters:
+      - description: Refresh Token Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.refreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: JSON with access_token
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/json.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/json.Response'
+      summary: Refresh Access Token
+      tags:
+      - auth
+  /orders:
+    post:
+      consumes:
+      - application/json
+      description: Create a new order with multiple items (Transactional)
+      parameters:
+      - description: Order details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/orders.createOrderRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Order created successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/json.Response'
+            - properties:
+                data:
+                  additionalProperties:
+                    type: string
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/json.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/json.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/json.Response'
+      security:
+      - BearerAuth: []
+      summary: Create Order
+      tags:
+      - orders
+  /orders/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get order details including items and product names by ID
+      parameters:
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/json.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/orders.Order'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/json.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/json.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/json.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/json.Response'
+      security:
+      - BearerAuth: []
+      summary: Get Order
+      tags:
+      - orders
+  /products:
+    get:
+      consumes:
+      - application/json
+      description: Get a paginated list of products with optional search query
+      parameters:
+      - description: Search query
+        in: query
+        name: query
+        type: string
+      - description: Page number (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: Page size (default 10)
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/json.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/products.Product'
+                  type: array
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/json.Response'
+      security:
+      - BearerAuth: []
+      summary: List Products
+      tags:
+      - products
+    post:
+      consumes:
+      - application/json
+      description: Create a new product with name and price
+      parameters:
+      - description: Product details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/products.createProductRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Product created successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/json.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/json.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/json.Response'
+        "409":
+          description: Product name exists
+          schema:
+            $ref: '#/definitions/json.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/json.Response'
+      security:
+      - BearerAuth: []
+      summary: Create Product
+      tags:
+      - products
+  /products/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a product by ID
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Product deleted successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/json.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/json.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/json.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/json.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/json.Response'
+      security:
+      - BearerAuth: []
+      summary: Delete Product
+      tags:
+      - products
+    put:
+      consumes:
+      - application/json
+      description: Update an existing product by ID
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated product details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/products.updateProductRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Product updated successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/json.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/json.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/json.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/json.Response'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/json.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/json.Response'
+      security:
+      - BearerAuth: []
+      summary: Update Product
+      tags:
+      - products
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer <your-jwt-token>" to authenticate.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
