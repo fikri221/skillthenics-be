@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"nds-go-starter/internal/core/auth"
+	"strconv"
 	"time"
 
 	"github.com/segmentio/ksuid"
@@ -42,7 +43,7 @@ func (s *service) Login(ctx context.Context, email, password string) (LoginRespo
 		return LoginResponse{}, auth.ErrInvalidToken
 	}
 
-	accessToken, err := s.jwtManager.GenerateAccessToken(string(rune(user.ID)))
+	accessToken, err := s.jwtManager.GenerateAccessToken(strconv.Itoa(int(user.ID)))
 	if err != nil {
 		return LoginResponse{}, err
 	}
@@ -77,5 +78,5 @@ func (s *service) Refresh(ctx context.Context, refreshToken string) (string, err
 		return "", auth.ErrExpiredToken
 	}
 
-	return s.jwtManager.GenerateAccessToken(string(rune(session.UserID)))
+	return s.jwtManager.GenerateAccessToken(strconv.Itoa(int(session.UserID)))
 }
