@@ -24,6 +24,12 @@ type Handler interface {
 	ListWorkoutSessions(w http.ResponseWriter, r *http.Request)
 	UpdateWorkoutSession(w http.ResponseWriter, r *http.Request)
 	DeleteWorkoutSession(w http.ResponseWriter, r *http.Request)
+
+	CreateWorkoutExercise(w http.ResponseWriter, r *http.Request)
+	GetWorkoutExerciseByID(w http.ResponseWriter, r *http.Request)
+	ListWorkoutExercisesBySession(w http.ResponseWriter, r *http.Request)
+	UpdateWorkoutExercise(w http.ResponseWriter, r *http.Request)
+	DeleteWorkoutExercise(w http.ResponseWriter, r *http.Request)
 }
 
 type handler struct {
@@ -202,4 +208,74 @@ func (h *handler) getUserIDFromContext(r *http.Request) (int32, error) {
 	}
 
 	return int32(userIDInt), nil
+}
+
+func (h *handler) CreateWorkoutExercise(w http.ResponseWriter, r *http.Request) {
+	var workoutExercise WorkoutExercise
+	if err := json.NewDecoder(r.Body).Decode(&workoutExercise); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := h.svc.CreateWorkoutExercise(r.Context(), workoutExercise); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+}
+
+func (h *handler) GetWorkoutExerciseByID(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+
+	workoutExercise, err := h.svc.GetWorkoutExerciseByID(r.Context(), idStr)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(workoutExercise)
+}
+
+func (h *handler) ListWorkoutExercisesBySession(w http.ResponseWriter, r *http.Request) {
+	workoutSessionID := chi.URLParam(r, "workout_session_id")
+
+	workoutExercises, err := h.svc.ListWorkoutExercisesBySession(r.Context(), workoutSessionID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(workoutExercises)
+}
+
+func (h *handler) UpdateWorkoutExercise(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+
+	var workoutExercise WorkoutExercise
+	if err := json.NewDecoder(r.Body).Decode(&workoutExercise); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	workoutExercise.ID = idStr
+
+	if err := h.svc.UpdateWorkoutExercise(r.Context(), workoutExercise); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h *handler) DeleteWorkoutExercise(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+
+	if err := h.svc.DeleteWorkoutExercise(r.Context(), idStr); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }

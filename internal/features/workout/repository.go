@@ -51,7 +51,7 @@ type Repository interface {
 
 	CreateWorkoutExercise(ctx context.Context, workoutExercise WorkoutExercise) error
 	GetWorkoutExerciseByID(ctx context.Context, id string) (WorkoutExercise, error)
-	ListWorkoutExercises(ctx context.Context, workoutSessionID string) ([]WorkoutExercise, error)
+	ListWorkoutExercisesBySession(ctx context.Context, workoutSessionID string) ([]WorkoutExercise, error)
 	UpdateWorkoutExercise(ctx context.Context, workoutExercise WorkoutExercise) error
 	DeleteWorkoutExercise(ctx context.Context, id string) error
 
@@ -149,7 +149,7 @@ func (r *repoWrapper) CreateWorkoutSession(ctx context.Context, session WorkoutS
 }
 
 func (r *repoWrapper) GetWorkoutSessionByID(ctx context.Context, id string) (WorkoutSession, error) {
-	workoutSession, err := r.db.GetWorkoutSession(ctx, id)
+	workoutSession, err := r.db.GetWorkoutSessionByID(ctx, id)
 	if err != nil {
 		return WorkoutSession{}, err
 	}
@@ -202,19 +202,58 @@ func (r *repoWrapper) DeleteWorkoutSession(ctx context.Context, id string) error
 }
 
 func (r *repoWrapper) CreateWorkoutExercise(ctx context.Context, workoutExercise WorkoutExercise) error {
-	return nil
+	_, err := r.db.CreateWorkoutExercise(ctx, repository.CreateWorkoutExerciseParams{
+		ID:               ksuid.New().String(),
+		WorkoutSessionID: workoutExercise.WorkoutSessionID,
+		ExerciseID:       workoutExercise.ExerciseID,
+		Notes:            toNullString(workoutExercise.Notes),
+	})
+	return err
 }
 
 func (r *repoWrapper) GetWorkoutExerciseByID(ctx context.Context, id string) (WorkoutExercise, error) {
-	return WorkoutExercise{}, nil
+	workoutExercise, err := r.db.GetWorkoutExerciseByID(ctx, id)
+	if err != nil {
+		return WorkoutExercise{}, err
+	}
+	return WorkoutExercise{
+		ID:               workoutExercise.ID,
+		WorkoutSessionID: workoutExercise.WorkoutSessionID,
+		ExerciseID:       workoutExercise.ExerciseID,
+		Notes:            fromNullString(workoutExercise.Notes),
+	}, nil
 }
 
-func (r *repoWrapper) ListWorkoutExercises(ctx context.Context, workoutSessionID string) ([]WorkoutExercise, error) {
-	return []WorkoutExercise{}, nil
+func (r *repoWrapper) ListWorkoutExercisesBySession(ctx context.Context, workoutSessionID string) ([]WorkoutExercise, error) {
+	workoutExercises, err := r.db.ListWorkoutExercisesBySession(ctx, workoutSessionID)
+	if err != nil {
+		return nil, err
+	}
+	var result []WorkoutExercise
+	for _, workoutExercise := range workoutExercises {
+		result = append(result, mapToWorkoutExercise(workoutExercise))
+	}
+	return result, nil
+}
+
+func mapToWorkoutExercise(workoutExercise repository.ListWorkoutExercisesBySessionRow) WorkoutExercise {
+	return WorkoutExercise{
+		ID:               workoutExercise.ID,
+		WorkoutSessionID: workoutExercise.WorkoutSessionID,
+		ExerciseID:       workoutExercise.ExerciseID,
+		ExerciseName:     workoutExercise.ExerciseName,
+		MuscleGroup:      fromNullString(workoutExercise.MuscleGroup),
+		Notes:            fromNullString(workoutExercise.Notes),
+	}
 }
 
 func (r *repoWrapper) UpdateWorkoutExercise(ctx context.Context, workoutExercise WorkoutExercise) error {
-	return nil
+	_, err := r.db.UpdateWorkoutExercise(ctx, repository.UpdateWorkoutExerciseParams{
+		ID:         workoutExercise.ID,
+		ExerciseID: workoutExercise.ExerciseID,
+		Notes:      toNullString(workoutExercise.Notes),
+	})
+	return err
 }
 
 func (r *repoWrapper) DeleteWorkoutExercise(ctx context.Context, id string) error {

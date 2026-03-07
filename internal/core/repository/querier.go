@@ -38,7 +38,8 @@ type Querier interface {
 	GetSessionByRefreshToken(ctx context.Context, refreshToken string) (MsSession, error)
 	GetUserByEmail(ctx context.Context, email string) (MsUser, error)
 	GetUserByID(ctx context.Context, id int32) (MsUser, error)
-	GetWorkoutSession(ctx context.Context, id string) (WorkoutSession, error)
+	GetWorkoutExerciseByID(ctx context.Context, id string) (WorkoutExercise, error)
+	GetWorkoutSessionByID(ctx context.Context, id string) (WorkoutSession, error)
 	ListExercises(ctx context.Context) ([]Exercise, error)
 	ListOrders(ctx context.Context) ([]MsOrder, error)
 	ListProducts(ctx context.Context, arg ListProductsParams) ([]MsProduct, error)
@@ -47,8 +48,10 @@ type Querier interface {
 	ListWorkoutExercisesBySession(ctx context.Context, workoutSessionID string) ([]ListWorkoutExercisesBySessionRow, error)
 	ListWorkoutSessionsByUser(ctx context.Context, userID int32) ([]WorkoutSession, error)
 	UpdateExercise(ctx context.Context, arg UpdateExerciseParams) (sql.Result, error)
+	UpdateExerciseSet(ctx context.Context, arg UpdateExerciseSetParams) (sql.Result, error)
 	UpdateProduct(ctx context.Context, arg UpdateProductParams) (sql.Result, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (sql.Result, error)
+	UpdateWorkoutExercise(ctx context.Context, arg UpdateWorkoutExerciseParams) (sql.Result, error)
 	UpdateWorkoutSession(ctx context.Context, arg UpdateWorkoutSessionParams) (sql.Result, error)
 }
 
