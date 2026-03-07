@@ -58,18 +58,24 @@ func (q *Queries) CreateExerciseSet(ctx context.Context, arg CreateExerciseSetPa
 }
 
 const createWorkoutExercise = `-- name: CreateWorkoutExercise :execresult
-INSERT INTO workout_exercises (workout_session_id, exercise_id, notes)
-VALUES (?, ?, ?)
+INSERT INTO workout_exercises (id, workout_session_id, exercise_id, notes)
+VALUES (?, ?, ?, ?)
 `
 
 type CreateWorkoutExerciseParams struct {
+	ID               string         `json:"id"`
 	WorkoutSessionID string         `json:"workout_session_id"`
 	ExerciseID       string         `json:"exercise_id"`
 	Notes            sql.NullString `json:"notes"`
 }
 
 func (q *Queries) CreateWorkoutExercise(ctx context.Context, arg CreateWorkoutExerciseParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, createWorkoutExercise, arg.WorkoutSessionID, arg.ExerciseID, arg.Notes)
+	return q.db.ExecContext(ctx, createWorkoutExercise,
+		arg.ID,
+		arg.WorkoutSessionID,
+		arg.ExerciseID,
+		arg.Notes,
+	)
 }
 
 const createWorkoutSession = `-- name: CreateWorkoutSession :execresult
@@ -94,28 +100,6 @@ func (q *Queries) CreateWorkoutSession(ctx context.Context, arg CreateWorkoutSes
 		arg.DurationMinutes,
 		arg.CaloriesBurned,
 		arg.Notes,
-	)
-}
-
-const updateWorkoutSession = `-- name: UpdateWorkoutSession :execresult
-UPDATE workout_sessions SET session_date = ?, duration_minutes = ?, calories_burned = ?, notes = ? WHERE id = ?
-`
-
-type UpdateWorkoutSessionParams struct {
-	ID              string         `json:"id"`
-	SessionDate     time.Time      `json:"session_date"`
-	DurationMinutes sql.NullInt32  `json:"duration_minutes"`
-	CaloriesBurned  sql.NullInt32  `json:"calories_burned"`
-	Notes           sql.NullString `json:"notes"`
-}
-
-func (q *Queries) UpdateWorkoutSession(ctx context.Context, arg UpdateWorkoutSessionParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, updateWorkoutSession,
-		arg.SessionDate,
-		arg.DurationMinutes,
-		arg.CaloriesBurned,
-		arg.Notes,
-		arg.ID,
 	)
 }
 
@@ -203,12 +187,30 @@ func (q *Queries) GetFullWorkoutSession(ctx context.Context, id string) ([]GetFu
 	return items, nil
 }
 
-const getWorkoutSession = `-- name: GetWorkoutSession :one
+const getWorkoutExerciseByID = `-- name: GetWorkoutExerciseByID :one
+SELECT id, workout_session_id, exercise_id, notes, created_at, updated_at FROM workout_exercises WHERE id = ?
+`
+
+func (q *Queries) GetWorkoutExerciseByID(ctx context.Context, id string) (WorkoutExercise, error) {
+	row := q.db.QueryRowContext(ctx, getWorkoutExerciseByID, id)
+	var i WorkoutExercise
+	err := row.Scan(
+		&i.ID,
+		&i.WorkoutSessionID,
+		&i.ExerciseID,
+		&i.Notes,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getWorkoutSessionByID = `-- name: GetWorkoutSessionByID :one
 SELECT id, user_id, session_date, duration_minutes, calories_burned, notes, created_at, updated_at FROM workout_sessions WHERE id = ?
 `
 
-func (q *Queries) GetWorkoutSession(ctx context.Context, id string) (WorkoutSession, error) {
-	row := q.db.QueryRowContext(ctx, getWorkoutSession, id)
+func (q *Queries) GetWorkoutSessionByID(ctx context.Context, id string) (WorkoutSession, error) {
+	row := q.db.QueryRowContext(ctx, getWorkoutSessionByID, id)
 	var i WorkoutSession
 	err := row.Scan(
 		&i.ID,
@@ -404,6 +406,64 @@ func (q *Queries) UpdateExercise(ctx context.Context, arg UpdateExerciseParams) 
 		arg.Description,
 		arg.MuscleGroup,
 		arg.Difficulty,
+		arg.ID,
+	)
+}
+
+const updateExerciseSet = `-- name: UpdateExerciseSet :execresult
+UPDATE exercise_sets SET set_number = ?, reps = ?, weight = ?, rest_seconds = ? WHERE id = ?
+`
+
+type UpdateExerciseSetParams struct {
+	SetNumber   int32          `json:"set_number"`
+	Reps        sql.NullInt32  `json:"reps"`
+	Weight      sql.NullString `json:"weight"`
+	RestSeconds sql.NullInt32  `json:"rest_seconds"`
+	ID          string         `json:"id"`
+}
+
+func (q *Queries) UpdateExerciseSet(ctx context.Context, arg UpdateExerciseSetParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, updateExerciseSet,
+		arg.SetNumber,
+		arg.Reps,
+		arg.Weight,
+		arg.RestSeconds,
+		arg.ID,
+	)
+}
+
+const updateWorkoutExercise = `-- name: UpdateWorkoutExercise :execresult
+UPDATE workout_exercises SET exercise_id = ?, notes = ? WHERE id = ?
+`
+
+type UpdateWorkoutExerciseParams struct {
+	ExerciseID string         `json:"exercise_id"`
+	Notes      sql.NullString `json:"notes"`
+	ID         string         `json:"id"`
+}
+
+func (q *Queries) UpdateWorkoutExercise(ctx context.Context, arg UpdateWorkoutExerciseParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, updateWorkoutExercise, arg.ExerciseID, arg.Notes, arg.ID)
+}
+
+const updateWorkoutSession = `-- name: UpdateWorkoutSession :execresult
+UPDATE workout_sessions SET session_date = ?, duration_minutes = ?, calories_burned = ?, notes = ? WHERE id = ?
+`
+
+type UpdateWorkoutSessionParams struct {
+	SessionDate     time.Time      `json:"session_date"`
+	DurationMinutes sql.NullInt32  `json:"duration_minutes"`
+	CaloriesBurned  sql.NullInt32  `json:"calories_burned"`
+	Notes           sql.NullString `json:"notes"`
+	ID              string         `json:"id"`
+}
+
+func (q *Queries) UpdateWorkoutSession(ctx context.Context, arg UpdateWorkoutSessionParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, updateWorkoutSession,
+		arg.SessionDate,
+		arg.DurationMinutes,
+		arg.CaloriesBurned,
+		arg.Notes,
 		arg.ID,
 	)
 }
