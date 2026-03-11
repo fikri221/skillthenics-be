@@ -30,6 +30,12 @@ type Handler interface {
 	ListWorkoutExercisesBySession(w http.ResponseWriter, r *http.Request)
 	UpdateWorkoutExercise(w http.ResponseWriter, r *http.Request)
 	DeleteWorkoutExercise(w http.ResponseWriter, r *http.Request)
+
+	CreateExerciseSet(w http.ResponseWriter, r *http.Request)
+	GetExerciseSetByID(w http.ResponseWriter, r *http.Request)
+	ListExerciseSets(w http.ResponseWriter, r *http.Request)
+	UpdateExerciseSet(w http.ResponseWriter, r *http.Request)
+	DeleteExerciseSet(w http.ResponseWriter, r *http.Request)
 }
 
 type handler struct {
@@ -273,6 +279,76 @@ func (h *handler) DeleteWorkoutExercise(w http.ResponseWriter, r *http.Request) 
 	idStr := chi.URLParam(r, "id")
 
 	if err := h.svc.DeleteWorkoutExercise(r.Context(), idStr); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h *handler) CreateExerciseSet(w http.ResponseWriter, r *http.Request) {
+	var exerciseSet ExerciseSet
+	if err := json.NewDecoder(r.Body).Decode(&exerciseSet); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := h.svc.CreateExerciseSet(r.Context(), exerciseSet); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+}
+
+func (h *handler) GetExerciseSetByID(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+
+	exerciseSet, err := h.svc.GetExerciseSetByID(r.Context(), idStr)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(exerciseSet)
+}
+
+func (h *handler) ListExerciseSets(w http.ResponseWriter, r *http.Request) {
+	workoutExerciseID := chi.URLParam(r, "workout_exercise_id")
+
+	exerciseSets, err := h.svc.ListExerciseSets(r.Context(), workoutExerciseID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(exerciseSets)
+}
+
+func (h *handler) UpdateExerciseSet(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+
+	var exerciseSet ExerciseSet
+	if err := json.NewDecoder(r.Body).Decode(&exerciseSet); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	exerciseSet.ID = idStr
+
+	if err := h.svc.UpdateExerciseSet(r.Context(), exerciseSet); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h *handler) DeleteExerciseSet(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+
+	if err := h.svc.DeleteExerciseSet(r.Context(), idStr); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

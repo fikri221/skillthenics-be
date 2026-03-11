@@ -35,4 +35,12 @@ func Register(r chi.Router, db repository.DBTX) {
 		r.Put("/{id}", handler.UpdateWorkoutExercise)
 		r.Delete("/{id}", handler.DeleteWorkoutExercise)
 	})
+
+	r.Route("/exercise-sets", func(r chi.Router) {
+		r.Get("/workout-exercise/{workout_exercise_id}", handler.ListExerciseSets)
+		r.Post("/", handler.CreateExerciseSet)
+		r.Get("/{id}", handler.GetExerciseSetByID)
+		r.Put("/{id}", handler.UpdateExerciseSet)
+		r.Delete("/{id}", handler.DeleteExerciseSet)
+	})
 }

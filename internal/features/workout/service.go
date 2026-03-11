@@ -20,6 +20,12 @@ type Service interface {
 	ListWorkoutExercisesBySession(ctx context.Context, workoutSessionID string) ([]WorkoutExercise, error)
 	UpdateWorkoutExercise(ctx context.Context, workoutExercise WorkoutExercise) error
 	DeleteWorkoutExercise(ctx context.Context, id string) error
+
+	CreateExerciseSet(ctx context.Context, exerciseSet ExerciseSet) error
+	GetExerciseSetByID(ctx context.Context, id string) (ExerciseSet, error)
+	ListExerciseSets(ctx context.Context, workoutExerciseID string) ([]ExerciseSet, error)
+	UpdateExerciseSet(ctx context.Context, exerciseSet ExerciseSet) error
+	DeleteExerciseSet(ctx context.Context, id string) error
 }
 
 type svc struct {
@@ -88,4 +94,24 @@ func (s *svc) UpdateWorkoutExercise(ctx context.Context, workoutExercise Workout
 
 func (s *svc) DeleteWorkoutExercise(ctx context.Context, id string) error {
 	return s.repo.DeleteWorkoutExercise(ctx, id)
+}
+
+func (s *svc) CreateExerciseSet(ctx context.Context, exerciseSet ExerciseSet) error {
+	return s.repo.CreateExerciseSet(ctx, exerciseSet)
+}
+
+func (s *svc) GetExerciseSetByID(ctx context.Context, id string) (ExerciseSet, error) {
+	return s.repo.GetExerciseSetByID(ctx, id)
+}
+
+func (s *svc) ListExerciseSets(ctx context.Context, workoutExerciseID string) ([]ExerciseSet, error) {
+	return s.repo.ListExerciseSets(ctx, workoutExerciseID)
+}
+
+func (s *svc) UpdateExerciseSet(ctx context.Context, exerciseSet ExerciseSet) error {
+	return s.repo.UpdateExerciseSet(ctx, exerciseSet)
+}
+
+func (s *svc) DeleteExerciseSet(ctx context.Context, id string) error {
+	return s.repo.DeleteExerciseSet(ctx, id)
 }
