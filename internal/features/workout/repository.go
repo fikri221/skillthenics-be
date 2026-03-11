@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"nds-go-starter/internal/core/repository"
+	"nds-go-starter/internal/json"
 
 	"github.com/segmentio/ksuid"
 )
@@ -261,19 +262,66 @@ func (r *repoWrapper) DeleteWorkoutExercise(ctx context.Context, id string) erro
 }
 
 func (r *repoWrapper) CreateExerciseSet(ctx context.Context, exerciseSet ExerciseSet) error {
-	return nil
+	_, err := r.db.CreateExerciseSet(ctx, repository.CreateExerciseSetParams{
+		ID:                ksuid.New().String(),
+		WorkoutExerciseID: exerciseSet.WorkoutExerciseID,
+		SetNumber:         exerciseSet.SetNumber,
+		Reps:              toNullInt32(exerciseSet.Reps),
+		Weight:            toNullString(exerciseSet.Weight),
+		WeightUnit:        toNullString(exerciseSet.WeightUnit),
+		RestSeconds:       toNullInt32(exerciseSet.RestSeconds),
+	})
+	return err
 }
 
 func (r *repoWrapper) GetExerciseSetByID(ctx context.Context, id string) (ExerciseSet, error) {
-	return ExerciseSet{}, nil
+	exerciseSet, err := r.db.GetExerciseSetByID(ctx, id)
+	if err == sql.ErrNoRows {
+		return ExerciseSet{}, json.ErrNotFound
+	} else if err != nil {
+		return ExerciseSet{}, err
+	}
+	return ExerciseSet{
+		ID:                exerciseSet.ID,
+		WorkoutExerciseID: exerciseSet.WorkoutExerciseID,
+		SetNumber:         exerciseSet.SetNumber,
+		Reps:              fromNullInt32(exerciseSet.Reps),
+		Weight:            fromNullString(exerciseSet.Weight),
+		WeightUnit:        fromNullString(exerciseSet.WeightUnit),
+		RestSeconds:       fromNullInt32(exerciseSet.RestSeconds),
+	}, nil
 }
 
 func (r *repoWrapper) ListExerciseSets(ctx context.Context, workoutExerciseID string) ([]ExerciseSet, error) {
-	return []ExerciseSet{}, nil
+	exerciseSets, err := r.db.ListSetsByWorkoutExercise(ctx, workoutExerciseID)
+	if err != nil {
+		return []ExerciseSet{}, err
+	}
+	result := []ExerciseSet{}
+	for _, exerciseSet := range exerciseSets {
+		result = append(result, ExerciseSet{
+			ID:                exerciseSet.ID,
+			WorkoutExerciseID: exerciseSet.WorkoutExerciseID,
+			SetNumber:         exerciseSet.SetNumber,
+			Reps:              fromNullInt32(exerciseSet.Reps),
+			Weight:            fromNullString(exerciseSet.Weight),
+			WeightUnit:        fromNullString(exerciseSet.WeightUnit),
+			RestSeconds:       fromNullInt32(exerciseSet.RestSeconds),
+		})
+	}
+	return result, nil
 }
 
 func (r *repoWrapper) UpdateExerciseSet(ctx context.Context, exerciseSet ExerciseSet) error {
-	return nil
+	_, err := r.db.UpdateExerciseSet(ctx, repository.UpdateExerciseSetParams{
+		ID:          exerciseSet.ID,
+		SetNumber:   exerciseSet.SetNumber,
+		Reps:        toNullInt32(exerciseSet.Reps),
+		Weight:      toNullString(exerciseSet.Weight),
+		WeightUnit:  toNullString(exerciseSet.WeightUnit),
+		RestSeconds: toNullInt32(exerciseSet.RestSeconds),
+	})
+	return err
 }
 
 func (r *repoWrapper) DeleteExerciseSet(ctx context.Context, id string) error {

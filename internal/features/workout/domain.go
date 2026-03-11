@@ -36,6 +36,7 @@ type ExerciseSet struct {
 	SetNumber         int32   `json:"set_number"`
 	Reps              *int32  `json:"reps"`
 	Weight            *string `json:"weight"`
+	WeightUnit        *string `json:"weight_unit"`
 	RestSeconds       *int32  `json:"rest_seconds"`
 }
 

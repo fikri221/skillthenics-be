@@ -35,24 +35,28 @@ func (q *Queries) CreateExercise(ctx context.Context, arg CreateExerciseParams) 
 }
 
 const createExerciseSet = `-- name: CreateExerciseSet :execresult
-INSERT INTO exercise_sets (workout_exercise_id, set_number, reps, weight, rest_seconds)
-VALUES (?, ?, ?, ?, ?)
+INSERT INTO exercise_sets (id, workout_exercise_id, set_number, reps, weight, weight_unit, rest_seconds)
+VALUES (?, ?, ?, ?, ?, ?, ?)
 `
 
 type CreateExerciseSetParams struct {
+	ID                string         `json:"id"`
 	WorkoutExerciseID string         `json:"workout_exercise_id"`
 	SetNumber         int32          `json:"set_number"`
 	Reps              sql.NullInt32  `json:"reps"`
 	Weight            sql.NullString `json:"weight"`
+	WeightUnit        sql.NullString `json:"weight_unit"`
 	RestSeconds       sql.NullInt32  `json:"rest_seconds"`
 }
 
 func (q *Queries) CreateExerciseSet(ctx context.Context, arg CreateExerciseSetParams) (sql.Result, error) {
 	return q.db.ExecContext(ctx, createExerciseSet,
+		arg.ID,
 		arg.WorkoutExerciseID,
 		arg.SetNumber,
 		arg.Reps,
 		arg.Weight,
+		arg.WeightUnit,
 		arg.RestSeconds,
 	)
 }
@@ -122,6 +126,27 @@ func (q *Queries) GetExerciseByID(ctx context.Context, id string) (Exercise, err
 	return i, err
 }
 
+const getExerciseSetByID = `-- name: GetExerciseSetByID :one
+SELECT id, workout_exercise_id, set_number, reps, weight, weight_unit, rest_seconds, created_at, updated_at FROM exercise_sets WHERE id = ?
+`
+
+func (q *Queries) GetExerciseSetByID(ctx context.Context, id string) (ExerciseSet, error) {
+	row := q.db.QueryRowContext(ctx, getExerciseSetByID, id)
+	var i ExerciseSet
+	err := row.Scan(
+		&i.ID,
+		&i.WorkoutExerciseID,
+		&i.SetNumber,
+		&i.Reps,
+		&i.Weight,
+		&i.WeightUnit,
+		&i.RestSeconds,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getFullWorkoutSession = `-- name: GetFullWorkoutSession :many
 SELECT 
     ws.id as session_id,
@@ -132,7 +157,8 @@ SELECT
     es.id as set_id,
     es.set_number,
     es.reps,
-    es.weight
+    es.weight,
+    es.weight_unit
 FROM workout_sessions ws
 LEFT JOIN workout_exercises we ON ws.id = we.workout_session_id
 LEFT JOIN exercises e ON we.exercise_id = e.id
@@ -150,6 +176,7 @@ type GetFullWorkoutSessionRow struct {
 	SetNumber         sql.NullInt32  `json:"set_number"`
 	Reps              sql.NullInt32  `json:"reps"`
 	Weight            sql.NullString `json:"weight"`
+	WeightUnit        sql.NullString `json:"weight_unit"`
 }
 
 // Fetching session, exercises, and sets in one join structure (if needed)
@@ -173,6 +200,7 @@ func (q *Queries) GetFullWorkoutSession(ctx context.Context, id string) ([]GetFu
 			&i.SetNumber,
 			&i.Reps,
 			&i.Weight,
+			&i.WeightUnit,
 		); err != nil {
 			return nil, err
 		}
@@ -261,7 +289,7 @@ func (q *Queries) ListExercises(ctx context.Context) ([]Exercise, error) {
 }
 
 const listSetsByWorkoutExercise = `-- name: ListSetsByWorkoutExercise :many
-SELECT id, workout_exercise_id, set_number, reps, weight, rest_seconds, created_at, updated_at FROM exercise_sets 
+SELECT id, workout_exercise_id, set_number, reps, weight, weight_unit, rest_seconds, created_at, updated_at FROM exercise_sets 
 WHERE workout_exercise_id = ? 
 ORDER BY set_number ASC
 `
@@ -281,6 +309,7 @@ func (q *Queries) ListSetsByWorkoutExercise(ctx context.Context, workoutExercise
 			&i.SetNumber,
 			&i.Reps,
 			&i.Weight,
+			&i.WeightUnit,
 			&i.RestSeconds,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -411,13 +440,14 @@ func (q *Queries) UpdateExercise(ctx context.Context, arg UpdateExerciseParams) 
 }
 
 const updateExerciseSet = `-- name: UpdateExerciseSet :execresult
-UPDATE exercise_sets SET set_number = ?, reps = ?, weight = ?, rest_seconds = ? WHERE id = ?
+UPDATE exercise_sets SET set_number = ?, reps = ?, weight = ?, weight_unit = ?, rest_seconds = ? WHERE id = ?
 `
 
 type UpdateExerciseSetParams struct {
 	SetNumber   int32          `json:"set_number"`
 	Reps        sql.NullInt32  `json:"reps"`
 	Weight      sql.NullString `json:"weight"`
+	WeightUnit  sql.NullString `json:"weight_unit"`
 	RestSeconds sql.NullInt32  `json:"rest_seconds"`
 	ID          string         `json:"id"`
 }
@@ -427,6 +457,7 @@ func (q *Queries) UpdateExerciseSet(ctx context.Context, arg UpdateExerciseSetPa
 		arg.SetNumber,
 		arg.Reps,
 		arg.Weight,
+		arg.WeightUnit,
 		arg.RestSeconds,
 		arg.ID,
 	)

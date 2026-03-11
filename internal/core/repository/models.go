@@ -25,6 +25,7 @@ type ExerciseSet struct {
 	SetNumber         int32          `json:"set_number"`
 	Reps              sql.NullInt32  `json:"reps"`
 	Weight            sql.NullString `json:"weight"`
+	WeightUnit        sql.NullString `json:"weight_unit"`
 	RestSeconds       sql.NullInt32  `json:"rest_seconds"`
 	CreatedAt         sql.NullTime   `json:"created_at"`
 	UpdatedAt         sql.NullTime   `json:"updated_at"`

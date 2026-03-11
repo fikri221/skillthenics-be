@@ -45,8 +45,11 @@ SELECT * FROM workout_exercises WHERE id = ?;
 UPDATE workout_exercises SET exercise_id = ?, notes = ? WHERE id = ?;
 
 -- name: CreateExerciseSet :execresult
-INSERT INTO exercise_sets (workout_exercise_id, set_number, reps, weight, rest_seconds)
-VALUES (?, ?, ?, ?, ?);
+INSERT INTO exercise_sets (id, workout_exercise_id, set_number, reps, weight, weight_unit, rest_seconds)
+VALUES (?, ?, ?, ?, ?, ?, ?);
+
+-- name: GetExerciseSetByID :one
+SELECT * FROM exercise_sets WHERE id = ?;
 
 -- name: ListSetsByWorkoutExercise :many
 SELECT * FROM exercise_sets 
@@ -54,7 +57,7 @@ WHERE workout_exercise_id = ?
 ORDER BY set_number ASC;
 
 -- name: UpdateExerciseSet :execresult
-UPDATE exercise_sets SET set_number = ?, reps = ?, weight = ?, rest_seconds = ? WHERE id = ?;
+UPDATE exercise_sets SET set_number = ?, reps = ?, weight = ?, weight_unit = ?, rest_seconds = ? WHERE id = ?;
 
 -- name: GetFullWorkoutSession :many
 -- Fetching session, exercises, and sets in one join structure (if needed)
@@ -68,7 +71,8 @@ SELECT
     es.id as set_id,
     es.set_number,
     es.reps,
-    es.weight
+    es.weight,
+    es.weight_unit
 FROM workout_sessions ws
 LEFT JOIN workout_exercises we ON ws.id = we.workout_session_id
 LEFT JOIN exercises e ON we.exercise_id = e.id

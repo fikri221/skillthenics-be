@@ -28,6 +28,7 @@ type Querier interface {
 	DeleteSession(ctx context.Context, id string) error
 	DeleteUser(ctx context.Context, id int32) (sql.Result, error)
 	GetExerciseByID(ctx context.Context, id string) (Exercise, error)
+	GetExerciseSetByID(ctx context.Context, id string) (ExerciseSet, error)
 	// Fetching session, exercises, and sets in one join structure (if needed)
 	// Note: This might require manual mapping in Go depending on how you want to handle the structure.
 	GetFullWorkoutSession(ctx context.Context, id string) ([]GetFullWorkoutSessionRow, error)
