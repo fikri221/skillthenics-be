@@ -11,7 +11,7 @@ swag:
 	swag init -g cmd/api.go -o docs
 
 migrate-up:
-	goose -dir internal/adapters/mysql/migrations mysql "root:root@tcp(localhost:3306)/go_starter_project?parseTime=true" up
+	goose -dir internal/adapters/mysql/migrations up
 
 migrate-down:
-	goose -dir internal/adapters/mysql/migrations mysql "root:root@tcp(localhost:3306)/go_starter_project?parseTime=true" down
+	goose -dir internal/adapters/mysql/migrations down
