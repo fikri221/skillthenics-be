@@ -36,6 +36,8 @@ type Handler interface {
 	ListExerciseSets(w http.ResponseWriter, r *http.Request)
 	UpdateExerciseSet(w http.ResponseWriter, r *http.Request)
 	DeleteExerciseSet(w http.ResponseWriter, r *http.Request)
+
+	GetFullWorkoutSession(w http.ResponseWriter, r *http.Request)
 }
 
 type handler struct {
@@ -354,4 +356,17 @@ func (h *handler) DeleteExerciseSet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+func (h *handler) GetFullWorkoutSession(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+
+	fullWorkoutSession, err := h.svc.GetFullWorkoutSession(r.Context(), idStr)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(fullWorkoutSession)
 }

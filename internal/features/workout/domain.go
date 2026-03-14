@@ -41,7 +41,7 @@ type ExerciseSet struct {
 }
 
 type FullWorkoutSession struct {
-	Session         WorkoutSession          `json:"session"`
-	Exercises       []WorkoutExercise       `json:"exercises"`
-	ExerciseSetsMap map[int32][]ExerciseSet `json:"exercise_sets_map"`
+	Session         WorkoutSession           `json:"session"`
+	Exercises       []WorkoutExercise        `json:"exercises"`
+	ExerciseSetsMap map[string][]ExerciseSet `json:"exercise_sets_map"`
 }

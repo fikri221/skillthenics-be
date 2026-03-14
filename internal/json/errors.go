@@ -32,6 +32,8 @@ func NewError(status int, message string) error {
 
 // Common errors
 var (
-	ErrInternal = NewError(http.StatusInternalServerError, "Internal Server Error")
-	ErrNotFound = NewError(http.StatusNotFound, "Resource Not Found")
+	ErrInternal     = NewError(http.StatusInternalServerError, "Internal Server Error")
+	ErrNotFound     = NewError(http.StatusNotFound, "Resource Not Found")
+	ErrUnauthorized = NewError(http.StatusUnauthorized, "Unauthorized")
+	ErrBadRequest   = NewError(http.StatusBadRequest, "Bad Request")
 )

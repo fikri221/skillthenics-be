@@ -43,4 +43,8 @@ func Register(r chi.Router, db repository.DBTX) {
 		r.Put("/{id}", handler.UpdateExerciseSet)
 		r.Delete("/{id}", handler.DeleteExerciseSet)
 	})
+
+	r.Route("/full-workout-session", func(r chi.Router) {
+		r.Get("/{id}", handler.GetFullWorkoutSession)
+	})
 }

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"nds-go-starter/internal/core/repository"
 	"nds-go-starter/internal/json"
+	"net/http"
 
 	"github.com/segmentio/ksuid"
 )
@@ -36,6 +37,12 @@ func fromNullInt32(ni sql.NullInt32) *int32 {
 	}
 	return &ni.Int32
 }
+
+var (
+	ErrWorkoutSessionNotFound  = json.NewError(http.StatusNotFound, "Workout Session Not Found")
+	ErrWorkoutExerciseNotFound = json.NewError(http.StatusNotFound, "Workout Exercise Not Found")
+	ErrExerciseSetNotFound     = json.NewError(http.StatusNotFound, "Exercise Set Not Found")
+)
 
 type Repository interface {
 	CreateExercise(ctx context.Context, exercise Exercise) error
@@ -151,7 +158,9 @@ func (r *repoWrapper) CreateWorkoutSession(ctx context.Context, session WorkoutS
 
 func (r *repoWrapper) GetWorkoutSessionByID(ctx context.Context, id string) (WorkoutSession, error) {
 	workoutSession, err := r.db.GetWorkoutSessionByID(ctx, id)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		return WorkoutSession{}, ErrWorkoutSessionNotFound
+	} else if err != nil {
 		return WorkoutSession{}, err
 	}
 	return WorkoutSession{
@@ -214,7 +223,9 @@ func (r *repoWrapper) CreateWorkoutExercise(ctx context.Context, workoutExercise
 
 func (r *repoWrapper) GetWorkoutExerciseByID(ctx context.Context, id string) (WorkoutExercise, error) {
 	workoutExercise, err := r.db.GetWorkoutExerciseByID(ctx, id)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		return WorkoutExercise{}, ErrWorkoutExerciseNotFound
+	} else if err != nil {
 		return WorkoutExercise{}, err
 	}
 	return WorkoutExercise{
@@ -262,7 +273,12 @@ func (r *repoWrapper) DeleteWorkoutExercise(ctx context.Context, id string) erro
 }
 
 func (r *repoWrapper) CreateExerciseSet(ctx context.Context, exerciseSet ExerciseSet) error {
-	_, err := r.db.CreateExerciseSet(ctx, repository.CreateExerciseSetParams{
+	_, err := r.GetWorkoutExerciseByID(ctx, exerciseSet.WorkoutExerciseID)
+	if err != nil {
+		return err
+	}
+
+	_, err = r.db.CreateExerciseSet(ctx, repository.CreateExerciseSetParams{
 		ID:                ksuid.New().String(),
 		WorkoutExerciseID: exerciseSet.WorkoutExerciseID,
 		SetNumber:         exerciseSet.SetNumber,
@@ -329,7 +345,57 @@ func (r *repoWrapper) DeleteExerciseSet(ctx context.Context, id string) error {
 }
 
 func (r *repoWrapper) GetFullWorkoutSession(ctx context.Context, id string) (FullWorkoutSession, error) {
-	return FullWorkoutSession{}, nil
+	workoutSession, err := r.db.GetWorkoutSessionByID(ctx, id)
+	if err == sql.ErrNoRows {
+		return FullWorkoutSession{}, ErrWorkoutSessionNotFound
+	} else if err != nil {
+		return FullWorkoutSession{}, err
+	}
+	workoutExercises, err := r.db.ListWorkoutExercisesBySession(ctx, workoutSession.ID)
+	if err == sql.ErrNoRows {
+		return FullWorkoutSession{}, ErrWorkoutExerciseNotFound
+	} else if err != nil {
+		return FullWorkoutSession{}, err
+	}
+	exerciseSetsMap := map[string][]ExerciseSet{}
+	for _, workoutExercise := range workoutExercises {
+		exerciseSets, err := r.db.ListSetsByWorkoutExercise(ctx, workoutExercise.ID)
+		if err == sql.ErrNoRows {
+			return FullWorkoutSession{}, ErrExerciseSetNotFound
+		} else if err != nil {
+			return FullWorkoutSession{}, err
+		}
+		mappedSets := []ExerciseSet{}
+		for _, es := range exerciseSets {
+			mappedSets = append(mappedSets, ExerciseSet{
+				ID:                es.ID,
+				WorkoutExerciseID: es.WorkoutExerciseID,
+				SetNumber:         es.SetNumber,
+				Reps:              fromNullInt32(es.Reps),
+				Weight:            fromNullString(es.Weight),
+				WeightUnit:        fromNullString(es.WeightUnit),
+				RestSeconds:       fromNullInt32(es.RestSeconds),
+			})
+		}
+		exerciseSetsMap[workoutExercise.ID] = mappedSets
+	}
+	resWorkoutSession := WorkoutSession{
+		ID:          workoutSession.ID,
+		UserID:      workoutSession.UserID,
+		SessionDate: workoutSession.SessionDate,
+		Duration:    fromNullInt32(workoutSession.DurationMinutes),
+		Calories:    fromNullInt32(workoutSession.CaloriesBurned),
+		Notes:       fromNullString(workoutSession.Notes),
+	}
+	resWorkoutExercises := []WorkoutExercise{}
+	for _, workoutExercise := range workoutExercises {
+		resWorkoutExercises = append(resWorkoutExercises, mapToWorkoutExercise(workoutExercise))
+	}
+	return FullWorkoutSession{
+		Session:         resWorkoutSession,
+		Exercises:       resWorkoutExercises,
+		ExerciseSetsMap: exerciseSetsMap,
+	}, nil
 }
 
 func (r *repoWrapper) ListFullWorkoutSessions(ctx context.Context, userID int32) ([]FullWorkoutSession, error) {
