@@ -18,8 +18,6 @@ import (
 	"nds-go-starter/internal/core/worker"
 	authFeature "nds-go-starter/internal/features/auth"
 	"nds-go-starter/internal/features/notifications"
-	"nds-go-starter/internal/features/orders"
-	"nds-go-starter/internal/features/products"
 	"nds-go-starter/internal/features/workout"
 	appMiddleware "nds-go-starter/internal/middleware"
 
@@ -41,7 +39,7 @@ func (app *application) mount() http.Handler {
 			AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 			ExposedHeaders:   []string{"Link"},
 			AllowCredentials: true,
-			MaxAge:           300, // Maximum value not ignored by any of major browsers
+			MaxAge:           3600, // Maximum value not ignored by any of major browsers
 		}))
 	}
 
@@ -62,9 +60,7 @@ func (app *application) mount() http.Handler {
 
 	// Kafka Initialization
 	kafkaAddr := "localhost:9092"
-	orderCreatedWriter := kafkaAdapter.NewWriter(kafkaAddr, "order-created")
 	orderCreatedReader := kafkaAdapter.NewReader(kafkaAddr, "order-created", "notification-group")
-	productCreatedWriter := kafkaAdapter.NewWriter(kafkaAddr, "product-created")
 	// productCreatedReader := kafkaAdapter.NewReader(kafkaAddr, "product-created", "notification-group")
 
 	// Register Workers
@@ -78,8 +74,6 @@ func (app *application) mount() http.Handler {
 
 	r.Group(func(r chi.Router) {
 		r.Use(appMiddleware.Auth(app.jwtManager, app.config.authEnabled))
-		products.Register(r, db, productCreatedWriter)
-		orders.Register(r, db, orderCreatedWriter)
 
 		workout.Register(r, db)
 	})

@@ -32,33 +32,6 @@ type ExerciseSet struct {
 	DeletedAt         sql.NullTime   `json:"deleted_at"`
 }
 
-type MsOrder struct {
-	ID           string       `json:"id"`
-	CustomerName string       `json:"customer_name"`
-	TotalAmount  string       `json:"total_amount"`
-	RecStatus    string       `json:"rec_status"`
-	CreatedAt    sql.NullTime `json:"created_at"`
-	UpdatedAt    sql.NullTime `json:"updated_at"`
-}
-
-type MsOrderItem struct {
-	ID        int32        `json:"id"`
-	OrderID   string       `json:"order_id"`
-	ProductID string       `json:"product_id"`
-	Quantity  int32        `json:"quantity"`
-	Price     string       `json:"price"`
-	CreatedAt sql.NullTime `json:"created_at"`
-}
-
-type MsProduct struct {
-	Name      string         `json:"name"`
-	Price     string         `json:"price"`
-	RecStatus string         `json:"rec_status"`
-	CreatedAt sql.NullTime   `json:"created_at"`
-	UpdatedAt sql.NullTime   `json:"updated_at"`
-	ID        sql.NullString `json:"id"`
-}
-
 type MsSession struct {
 	ID           string         `json:"id"`
 	UserID       int32          `json:"user_id"`

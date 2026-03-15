@@ -89,7 +89,12 @@ func (h *handler) ListExercises(w http.ResponseWriter, r *http.Request) {
 func (h *handler) UpdateExercise(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 
-	var exercise Exercise
+	exercise, err := h.svc.GetExerciseByID(r.Context(), idStr)
+	if err != nil {
+		http.Error(w, "Exercise not found", http.StatusNotFound)
+		return
+	}
+
 	if err := json.NewDecoder(r.Body).Decode(&exercise); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -160,7 +165,12 @@ func (h *handler) UpdateWorkoutSession(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	fmt.Println("idStr: ", idStr)
 
-	var session WorkoutSession
+	session, err := h.svc.GetWorkoutSessionByID(r.Context(), idStr)
+	if err != nil {
+		http.Error(w, "Workout session not found", http.StatusNotFound)
+		return
+	}
+
 	if err := json.NewDecoder(r.Body).Decode(&session); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -250,7 +260,12 @@ func (h *handler) ListWorkoutExercisesBySession(w http.ResponseWriter, r *http.R
 func (h *handler) UpdateWorkoutExercise(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 
-	var workoutExercise WorkoutExercise
+	workoutExercise, err := h.svc.GetWorkoutExerciseByID(r.Context(), idStr)
+	if err != nil {
+		http.Error(w, "Workout exercise not found", http.StatusNotFound)
+		return
+	}
+
 	if err := json.NewDecoder(r.Body).Decode(&workoutExercise); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -320,7 +335,12 @@ func (h *handler) ListExerciseSets(w http.ResponseWriter, r *http.Request) {
 func (h *handler) UpdateExerciseSet(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 
-	var exerciseSet ExerciseSet
+	exerciseSet, err := h.svc.GetExerciseSetByID(r.Context(), idStr)
+	if err != nil {
+		http.Error(w, "Exercise set not found", http.StatusNotFound)
+		return
+	}
+
 	if err := json.NewDecoder(r.Body).Decode(&exerciseSet); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

@@ -11,21 +11,14 @@ import (
 
 type Querier interface {
 	BlockSession(ctx context.Context, id string) error
-	CheckProductNameExists(ctx context.Context, name string) (bool, error)
-	CheckProductNameExistsForOther(ctx context.Context, arg CheckProductNameExistsForOtherParams) (bool, error)
 	CleanupExpiredSessions(ctx context.Context) error
-	CountProducts(ctx context.Context, arg CountProductsParams) (int64, error)
 	CreateExercise(ctx context.Context, arg CreateExerciseParams) (sql.Result, error)
 	CreateExerciseSet(ctx context.Context, arg CreateExerciseSetParams) (sql.Result, error)
-	CreateOrder(ctx context.Context, arg CreateOrderParams) (sql.Result, error)
-	CreateOrderItem(ctx context.Context, arg CreateOrderItemParams) (sql.Result, error)
-	CreateProduct(ctx context.Context, arg CreateProductParams) (sql.Result, error)
 	CreateSession(ctx context.Context, arg CreateSessionParams) (sql.Result, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (sql.Result, error)
 	CreateWorkoutExercise(ctx context.Context, arg CreateWorkoutExerciseParams) (sql.Result, error)
 	CreateWorkoutSession(ctx context.Context, arg CreateWorkoutSessionParams) (sql.Result, error)
 	DeleteExerciseSet(ctx context.Context, id string) (sql.Result, error)
-	DeleteProduct(ctx context.Context, id sql.NullString) (sql.Result, error)
 	DeleteSession(ctx context.Context, id string) error
 	DeleteUser(ctx context.Context, id int32) (sql.Result, error)
 	DeleteWorkoutExercise(ctx context.Context, id string) (sql.Result, error)
@@ -35,9 +28,6 @@ type Querier interface {
 	// Fetching session, exercises, and sets in one join structure (if needed)
 	// Note: This might require manual mapping in Go depending on how you want to handle the structure.
 	GetFullWorkoutSession(ctx context.Context, id string) ([]GetFullWorkoutSessionRow, error)
-	// Demonstrating JOIN to fetch Order, Items, and Product details
-	GetOrderWithItems(ctx context.Context, id string) ([]GetOrderWithItemsRow, error)
-	GetProductByID(ctx context.Context, id sql.NullString) (MsProduct, error)
 	GetSession(ctx context.Context, id string) (MsSession, error)
 	GetSessionByRefreshToken(ctx context.Context, refreshToken string) (MsSession, error)
 	GetUserByEmail(ctx context.Context, email string) (MsUser, error)
@@ -45,15 +35,12 @@ type Querier interface {
 	GetWorkoutExerciseByID(ctx context.Context, id string) (WorkoutExercise, error)
 	GetWorkoutSessionByID(ctx context.Context, id string) (WorkoutSession, error)
 	ListExercises(ctx context.Context) ([]Exercise, error)
-	ListOrders(ctx context.Context) ([]MsOrder, error)
-	ListProducts(ctx context.Context, arg ListProductsParams) ([]MsProduct, error)
 	ListSetsByWorkoutExercise(ctx context.Context, workoutExerciseID string) ([]ExerciseSet, error)
 	ListUsers(ctx context.Context) ([]MsUser, error)
 	ListWorkoutExercisesBySession(ctx context.Context, workoutSessionID string) ([]ListWorkoutExercisesBySessionRow, error)
 	ListWorkoutSessionsByUser(ctx context.Context, userID int32) ([]WorkoutSession, error)
 	UpdateExercise(ctx context.Context, arg UpdateExerciseParams) (sql.Result, error)
 	UpdateExerciseSet(ctx context.Context, arg UpdateExerciseSetParams) (sql.Result, error)
-	UpdateProduct(ctx context.Context, arg UpdateProductParams) (sql.Result, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (sql.Result, error)
 	UpdateWorkoutExercise(ctx context.Context, arg UpdateWorkoutExerciseParams) (sql.Result, error)
 	UpdateWorkoutSession(ctx context.Context, arg UpdateWorkoutSessionParams) (sql.Result, error)
