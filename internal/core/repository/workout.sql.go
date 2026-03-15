@@ -107,6 +107,30 @@ func (q *Queries) CreateWorkoutSession(ctx context.Context, arg CreateWorkoutSes
 	)
 }
 
+const deleteExerciseSet = `-- name: DeleteExerciseSet :execresult
+UPDATE exercise_sets SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?
+`
+
+func (q *Queries) DeleteExerciseSet(ctx context.Context, id string) (sql.Result, error) {
+	return q.db.ExecContext(ctx, deleteExerciseSet, id)
+}
+
+const deleteWorkoutExercise = `-- name: DeleteWorkoutExercise :execresult
+UPDATE workout_exercises SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?
+`
+
+func (q *Queries) DeleteWorkoutExercise(ctx context.Context, id string) (sql.Result, error) {
+	return q.db.ExecContext(ctx, deleteWorkoutExercise, id)
+}
+
+const deleteWorkoutSession = `-- name: DeleteWorkoutSession :execresult
+UPDATE workout_sessions SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?
+`
+
+func (q *Queries) DeleteWorkoutSession(ctx context.Context, id string) (sql.Result, error) {
+	return q.db.ExecContext(ctx, deleteWorkoutSession, id)
+}
+
 const getExerciseByID = `-- name: GetExerciseByID :one
 SELECT id, name, description, muscle_group, difficulty, created_at, updated_at FROM exercises WHERE id = ?
 `
@@ -127,7 +151,7 @@ func (q *Queries) GetExerciseByID(ctx context.Context, id string) (Exercise, err
 }
 
 const getExerciseSetByID = `-- name: GetExerciseSetByID :one
-SELECT id, workout_exercise_id, set_number, reps, weight, weight_unit, rest_seconds, created_at, updated_at FROM exercise_sets WHERE id = ?
+SELECT id, workout_exercise_id, set_number, reps, weight, rest_seconds, created_at, updated_at, weight_unit, deleted_at FROM exercise_sets WHERE id = ? AND deleted_at IS NULL
 `
 
 func (q *Queries) GetExerciseSetByID(ctx context.Context, id string) (ExerciseSet, error) {
@@ -139,10 +163,11 @@ func (q *Queries) GetExerciseSetByID(ctx context.Context, id string) (ExerciseSe
 		&i.SetNumber,
 		&i.Reps,
 		&i.Weight,
-		&i.WeightUnit,
 		&i.RestSeconds,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.WeightUnit,
+		&i.DeletedAt,
 	)
 	return i, err
 }
@@ -160,10 +185,10 @@ SELECT
     es.weight,
     es.weight_unit
 FROM workout_sessions ws
-LEFT JOIN workout_exercises we ON ws.id = we.workout_session_id
+LEFT JOIN workout_exercises we ON ws.id = we.workout_session_id AND we.deleted_at IS NULL
 LEFT JOIN exercises e ON we.exercise_id = e.id
-LEFT JOIN exercise_sets es ON we.id = es.workout_exercise_id
-WHERE ws.id = ?
+LEFT JOIN exercise_sets es ON we.id = es.workout_exercise_id AND es.deleted_at IS NULL
+WHERE ws.id = ? AND ws.deleted_at IS NULL
 `
 
 type GetFullWorkoutSessionRow struct {
@@ -216,7 +241,7 @@ func (q *Queries) GetFullWorkoutSession(ctx context.Context, id string) ([]GetFu
 }
 
 const getWorkoutExerciseByID = `-- name: GetWorkoutExerciseByID :one
-SELECT id, workout_session_id, exercise_id, notes, created_at, updated_at FROM workout_exercises WHERE id = ?
+SELECT id, workout_session_id, exercise_id, notes, created_at, updated_at, deleted_at FROM workout_exercises WHERE id = ? AND deleted_at IS NULL
 `
 
 func (q *Queries) GetWorkoutExerciseByID(ctx context.Context, id string) (WorkoutExercise, error) {
@@ -229,12 +254,13 @@ func (q *Queries) GetWorkoutExerciseByID(ctx context.Context, id string) (Workou
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DeletedAt,
 	)
 	return i, err
 }
 
 const getWorkoutSessionByID = `-- name: GetWorkoutSessionByID :one
-SELECT id, user_id, session_date, duration_minutes, calories_burned, notes, created_at, updated_at FROM workout_sessions WHERE id = ?
+SELECT id, user_id, session_date, duration_minutes, calories_burned, notes, created_at, updated_at, deleted_at FROM workout_sessions WHERE id = ? AND deleted_at IS NULL
 `
 
 func (q *Queries) GetWorkoutSessionByID(ctx context.Context, id string) (WorkoutSession, error) {
@@ -249,6 +275,7 @@ func (q *Queries) GetWorkoutSessionByID(ctx context.Context, id string) (Workout
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DeletedAt,
 	)
 	return i, err
 }
@@ -289,8 +316,8 @@ func (q *Queries) ListExercises(ctx context.Context) ([]Exercise, error) {
 }
 
 const listSetsByWorkoutExercise = `-- name: ListSetsByWorkoutExercise :many
-SELECT id, workout_exercise_id, set_number, reps, weight, weight_unit, rest_seconds, created_at, updated_at FROM exercise_sets 
-WHERE workout_exercise_id = ? 
+SELECT id, workout_exercise_id, set_number, reps, weight, rest_seconds, created_at, updated_at, weight_unit, deleted_at FROM exercise_sets 
+WHERE workout_exercise_id = ? AND deleted_at IS NULL
 ORDER BY set_number ASC
 `
 
@@ -309,10 +336,11 @@ func (q *Queries) ListSetsByWorkoutExercise(ctx context.Context, workoutExercise
 			&i.SetNumber,
 			&i.Reps,
 			&i.Weight,
-			&i.WeightUnit,
 			&i.RestSeconds,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.WeightUnit,
+			&i.DeletedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -329,12 +357,12 @@ func (q *Queries) ListSetsByWorkoutExercise(ctx context.Context, workoutExercise
 
 const listWorkoutExercisesBySession = `-- name: ListWorkoutExercisesBySession :many
 SELECT 
-    we.id, we.workout_session_id, we.exercise_id, we.notes, we.created_at, we.updated_at, 
+    we.id, we.workout_session_id, we.exercise_id, we.notes, we.created_at, we.updated_at, we.deleted_at, 
     e.name as exercise_name,
     e.muscle_group
 FROM workout_exercises we
 JOIN exercises e ON we.exercise_id = e.id
-WHERE we.workout_session_id = ?
+WHERE we.workout_session_id = ? AND we.deleted_at IS NULL
 ORDER BY we.created_at ASC
 `
 
@@ -345,6 +373,7 @@ type ListWorkoutExercisesBySessionRow struct {
 	Notes            sql.NullString `json:"notes"`
 	CreatedAt        sql.NullTime   `json:"created_at"`
 	UpdatedAt        sql.NullTime   `json:"updated_at"`
+	DeletedAt        sql.NullTime   `json:"deleted_at"`
 	ExerciseName     string         `json:"exercise_name"`
 	MuscleGroup      sql.NullString `json:"muscle_group"`
 }
@@ -365,6 +394,7 @@ func (q *Queries) ListWorkoutExercisesBySession(ctx context.Context, workoutSess
 			&i.Notes,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.DeletedAt,
 			&i.ExerciseName,
 			&i.MuscleGroup,
 		); err != nil {
@@ -382,7 +412,7 @@ func (q *Queries) ListWorkoutExercisesBySession(ctx context.Context, workoutSess
 }
 
 const listWorkoutSessionsByUser = `-- name: ListWorkoutSessionsByUser :many
-SELECT id, user_id, session_date, duration_minutes, calories_burned, notes, created_at, updated_at FROM workout_sessions WHERE user_id = ? ORDER BY session_date DESC
+SELECT id, user_id, session_date, duration_minutes, calories_burned, notes, created_at, updated_at, deleted_at FROM workout_sessions WHERE user_id = ? AND deleted_at IS NULL ORDER BY session_date DESC
 `
 
 func (q *Queries) ListWorkoutSessionsByUser(ctx context.Context, userID int32) ([]WorkoutSession, error) {
@@ -403,6 +433,7 @@ func (q *Queries) ListWorkoutSessionsByUser(ctx context.Context, userID int32) (
 			&i.Notes,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.DeletedAt,
 		); err != nil {
 			return nil, err
 		}

@@ -49,7 +49,6 @@ type Repository interface {
 	GetExerciseByID(ctx context.Context, id string) (Exercise, error)
 	ListExercises(ctx context.Context) ([]Exercise, error)
 	UpdateExercise(ctx context.Context, exercise Exercise) error
-	DeleteExercise(ctx context.Context, id string) error
 
 	CreateWorkoutSession(ctx context.Context, session WorkoutSession) error
 	GetWorkoutSessionByID(ctx context.Context, id string) (WorkoutSession, error)
@@ -70,7 +69,6 @@ type Repository interface {
 	DeleteExerciseSet(ctx context.Context, id string) error
 
 	GetFullWorkoutSession(ctx context.Context, id string) (FullWorkoutSession, error)
-	ListFullWorkoutSessions(ctx context.Context, userID int32) ([]FullWorkoutSession, error)
 }
 
 func NewRepository(db repository.Querier) Repository {
@@ -140,10 +138,6 @@ func (r *repoWrapper) UpdateExercise(ctx context.Context, exercise Exercise) err
 	return err
 }
 
-func (r *repoWrapper) DeleteExercise(ctx context.Context, id string) error {
-	return nil
-}
-
 func (r *repoWrapper) CreateWorkoutSession(ctx context.Context, session WorkoutSession) error {
 	_, err := r.db.CreateWorkoutSession(ctx, repository.CreateWorkoutSessionParams{
 		ID:              ksuid.New().String(),
@@ -208,7 +202,8 @@ func (r *repoWrapper) UpdateWorkoutSession(ctx context.Context, session WorkoutS
 }
 
 func (r *repoWrapper) DeleteWorkoutSession(ctx context.Context, id string) error {
-	return nil
+	_, err := r.db.DeleteWorkoutSession(ctx, id)
+	return err
 }
 
 func (r *repoWrapper) CreateWorkoutExercise(ctx context.Context, workoutExercise WorkoutExercise) error {
@@ -269,7 +264,8 @@ func (r *repoWrapper) UpdateWorkoutExercise(ctx context.Context, workoutExercise
 }
 
 func (r *repoWrapper) DeleteWorkoutExercise(ctx context.Context, id string) error {
-	return nil
+	_, err := r.db.DeleteWorkoutExercise(ctx, id)
+	return err
 }
 
 func (r *repoWrapper) CreateExerciseSet(ctx context.Context, exerciseSet ExerciseSet) error {
@@ -341,7 +337,8 @@ func (r *repoWrapper) UpdateExerciseSet(ctx context.Context, exerciseSet Exercis
 }
 
 func (r *repoWrapper) DeleteExerciseSet(ctx context.Context, id string) error {
-	return nil
+	_, err := r.db.DeleteExerciseSet(ctx, id)
+	return err
 }
 
 func (r *repoWrapper) GetFullWorkoutSession(ctx context.Context, id string) (FullWorkoutSession, error) {
@@ -396,8 +393,4 @@ func (r *repoWrapper) GetFullWorkoutSession(ctx context.Context, id string) (Ful
 		Exercises:       resWorkoutExercises,
 		ExerciseSetsMap: exerciseSetsMap,
 	}, nil
-}
-
-func (r *repoWrapper) ListFullWorkoutSessions(ctx context.Context, userID int32) ([]FullWorkoutSession, error) {
-	return []FullWorkoutSession{}, nil
 }

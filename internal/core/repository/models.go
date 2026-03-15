@@ -25,10 +25,11 @@ type ExerciseSet struct {
 	SetNumber         int32          `json:"set_number"`
 	Reps              sql.NullInt32  `json:"reps"`
 	Weight            sql.NullString `json:"weight"`
-	WeightUnit        sql.NullString `json:"weight_unit"`
 	RestSeconds       sql.NullInt32  `json:"rest_seconds"`
 	CreatedAt         sql.NullTime   `json:"created_at"`
 	UpdatedAt         sql.NullTime   `json:"updated_at"`
+	WeightUnit        sql.NullString `json:"weight_unit"`
+	DeletedAt         sql.NullTime   `json:"deleted_at"`
 }
 
 type MsOrder struct {
@@ -86,6 +87,7 @@ type WorkoutExercise struct {
 	Notes            sql.NullString `json:"notes"`
 	CreatedAt        sql.NullTime   `json:"created_at"`
 	UpdatedAt        sql.NullTime   `json:"updated_at"`
+	DeletedAt        sql.NullTime   `json:"deleted_at"`
 }
 
 type WorkoutSession struct {
@@ -97,4 +99,5 @@ type WorkoutSession struct {
 	Notes           sql.NullString `json:"notes"`
 	CreatedAt       sql.NullTime   `json:"created_at"`
 	UpdatedAt       sql.NullTime   `json:"updated_at"`
+	DeletedAt       sql.NullTime   `json:"deleted_at"`
 }

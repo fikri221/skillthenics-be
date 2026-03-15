@@ -24,9 +24,12 @@ type Querier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) (sql.Result, error)
 	CreateWorkoutExercise(ctx context.Context, arg CreateWorkoutExerciseParams) (sql.Result, error)
 	CreateWorkoutSession(ctx context.Context, arg CreateWorkoutSessionParams) (sql.Result, error)
+	DeleteExerciseSet(ctx context.Context, id string) (sql.Result, error)
 	DeleteProduct(ctx context.Context, id sql.NullString) (sql.Result, error)
 	DeleteSession(ctx context.Context, id string) error
 	DeleteUser(ctx context.Context, id int32) (sql.Result, error)
+	DeleteWorkoutExercise(ctx context.Context, id string) (sql.Result, error)
+	DeleteWorkoutSession(ctx context.Context, id string) (sql.Result, error)
 	GetExerciseByID(ctx context.Context, id string) (Exercise, error)
 	GetExerciseSetByID(ctx context.Context, id string) (ExerciseSet, error)
 	// Fetching session, exercises, and sets in one join structure (if needed)

@@ -16,10 +16,10 @@ INSERT INTO workout_sessions (id, user_id, session_date, duration_minutes, calor
 VALUES (?, ?, ?, ?, ?, ?);
 
 -- name: GetWorkoutSessionByID :one
-SELECT * FROM workout_sessions WHERE id = ?;
+SELECT * FROM workout_sessions WHERE id = ? AND deleted_at IS NULL;
 
 -- name: ListWorkoutSessionsByUser :many
-SELECT * FROM workout_sessions WHERE user_id = ? ORDER BY session_date DESC;
+SELECT * FROM workout_sessions WHERE user_id = ? AND deleted_at IS NULL ORDER BY session_date DESC;
 
 -- name: UpdateWorkoutSession :execresult
 UPDATE workout_sessions SET session_date = ?, duration_minutes = ?, calories_burned = ?, notes = ? WHERE id = ?;
@@ -35,11 +35,11 @@ SELECT
     e.muscle_group
 FROM workout_exercises we
 JOIN exercises e ON we.exercise_id = e.id
-WHERE we.workout_session_id = ?
+WHERE we.workout_session_id = ? AND we.deleted_at IS NULL
 ORDER BY we.created_at ASC;
 
 -- name: GetWorkoutExerciseByID :one
-SELECT * FROM workout_exercises WHERE id = ?;
+SELECT * FROM workout_exercises WHERE id = ? AND deleted_at IS NULL;
 
 -- name: UpdateWorkoutExercise :execresult
 UPDATE workout_exercises SET exercise_id = ?, notes = ? WHERE id = ?;
@@ -49,11 +49,11 @@ INSERT INTO exercise_sets (id, workout_exercise_id, set_number, reps, weight, we
 VALUES (?, ?, ?, ?, ?, ?, ?);
 
 -- name: GetExerciseSetByID :one
-SELECT * FROM exercise_sets WHERE id = ?;
+SELECT * FROM exercise_sets WHERE id = ? AND deleted_at IS NULL;
 
 -- name: ListSetsByWorkoutExercise :many
 SELECT * FROM exercise_sets 
-WHERE workout_exercise_id = ? 
+WHERE workout_exercise_id = ? AND deleted_at IS NULL
 ORDER BY set_number ASC;
 
 -- name: UpdateExerciseSet :execresult
@@ -74,7 +74,16 @@ SELECT
     es.weight,
     es.weight_unit
 FROM workout_sessions ws
-LEFT JOIN workout_exercises we ON ws.id = we.workout_session_id
+LEFT JOIN workout_exercises we ON ws.id = we.workout_session_id AND we.deleted_at IS NULL
 LEFT JOIN exercises e ON we.exercise_id = e.id
-LEFT JOIN exercise_sets es ON we.id = es.workout_exercise_id
-WHERE ws.id = ?;
+LEFT JOIN exercise_sets es ON we.id = es.workout_exercise_id AND es.deleted_at IS NULL
+WHERE ws.id = ? AND ws.deleted_at IS NULL;
+
+-- name: DeleteWorkoutSession :execresult
+UPDATE workout_sessions SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?;
+
+-- name: DeleteWorkoutExercise :execresult
+UPDATE workout_exercises SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?;
+
+-- name: DeleteExerciseSet :execresult
+UPDATE exercise_sets SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?;

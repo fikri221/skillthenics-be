@@ -17,7 +17,6 @@ type Handler interface {
 	GetExerciseByID(w http.ResponseWriter, r *http.Request)
 	ListExercises(w http.ResponseWriter, r *http.Request)
 	UpdateExercise(w http.ResponseWriter, r *http.Request)
-	DeleteExercise(w http.ResponseWriter, r *http.Request)
 
 	CreateWorkoutSession(w http.ResponseWriter, r *http.Request)
 	GetWorkoutSessionByID(w http.ResponseWriter, r *http.Request)
@@ -98,17 +97,6 @@ func (h *handler) UpdateExercise(w http.ResponseWriter, r *http.Request) {
 	exercise.ID = idStr
 
 	if err := h.svc.UpdateExercise(r.Context(), exercise); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-}
-
-func (h *handler) DeleteExercise(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-
-	if err := h.svc.DeleteExercise(r.Context(), idStr); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

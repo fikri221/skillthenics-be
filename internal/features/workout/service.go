@@ -7,7 +7,6 @@ type Service interface {
 	GetExerciseByID(ctx context.Context, id string) (Exercise, error)
 	ListExercises(ctx context.Context) ([]Exercise, error)
 	UpdateExercise(ctx context.Context, exercise Exercise) error
-	DeleteExercise(ctx context.Context, id string) error
 
 	CreateWorkoutSession(ctx context.Context, session WorkoutSession) error
 	GetWorkoutSessionByID(ctx context.Context, id string) (WorkoutSession, error)
@@ -52,10 +51,6 @@ func (s *svc) ListExercises(ctx context.Context) ([]Exercise, error) {
 
 func (s *svc) UpdateExercise(ctx context.Context, exercise Exercise) error {
 	return s.repo.UpdateExercise(ctx, exercise)
-}
-
-func (s *svc) DeleteExercise(ctx context.Context, id string) error {
-	return s.repo.DeleteExercise(ctx, id)
 }
 
 func (s *svc) CreateWorkoutSession(ctx context.Context, session WorkoutSession) error {
